@@ -1,0 +1,85 @@
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["clientExtensions"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model campaign {
+  id                   String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                 String                 @db.VarChar(255)
+  start_date           DateTime               @db.Date
+  end_date             DateTime               @db.Date
+  marketing_user_id    String                 @db.Uuid
+  user                 user                   @relation(fields: [marketing_user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  campaign_performance campaign_performance[]
+}
+
+model campaign_performance {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  campaign_id String   @db.Uuid
+  metric      String   @db.VarChar(50)
+  value       Int
+  date        DateTime @db.Date
+  campaign    campaign @relation(fields: [campaign_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model client {
+  id                                String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id                           String         @db.Uuid
+  health_coach_id                   String         @db.Uuid
+  user_client_health_coach_idTouser user           @relation("client_health_coach_idTouser", fields: [health_coach_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user_client_user_idTouser         user           @relation("client_user_idTouser", fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  fitness_data                      fitness_data[]
+  goal                              goal[]
+}
+
+model feedback {
+  id      String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id String   @db.Uuid
+  message String
+  rating  Int
+  date    DateTime @db.Date
+  user    user     @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model fitness_data {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  client_id String   @db.Uuid
+  data_type String   @db.VarChar(50)
+  value     Int
+  date      DateTime @db.Date
+  client    client   @relation(fields: [client_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model fitness_tracker {
+  id      String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name    String @db.VarChar(255)
+  user_id String @db.Uuid
+  user    user   @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model goal {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  client_id   String   @db.Uuid
+  description String   @db.VarChar(255)
+  target_date DateTime @db.Date
+  client      client   @relation(fields: [client_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model user {
+  id                                  String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email                               String            @unique @db.VarChar(255)
+  firstName                           String?           @db.VarChar(255)
+  lastName                            String?           @db.VarChar(255)
+  roq_user_id                         String            @db.VarChar(255)
+  tenant_id                           String            @db.VarChar(255)
+  campaign                            campaign[]
+  client_client_health_coach_idTouser client[]          @relation("client_health_coach_idTouser")
+  client_client_user_idTouser         client[]          @relation("client_user_idTouser")
+  feedback                            feedback[]
+  fitness_tracker                     fitness_tracker[]
+}
